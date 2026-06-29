@@ -1,0 +1,28 @@
+fastapi==0.115.0
+starlette==0.38.6
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.35
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+PyYAML==6.0.2
+jinja2==3.1.4
+python-multipart==0.0.9
+httpx==0.27.2
+click==8.1.7
+numpy==1.26.4
+
+# --- Free local AI (no API keys, no cost) ---
+sentence-transformers==5.6.0     # local embeddings (runs on CPU)
+ollama==0.3.3                    # talks to local Ollama LLM (free, runs on your machine)
+
+# --- Optional: only needed if you choose to use paid hosted APIs instead ---
+anthropic==0.34.2
+openai==1.51.0
+
+# --- Database driver (pick one; SQLite needs nothing, Postgres needs this) ---
+psycopg2-binary==2.9.9
+
+# --- Dev / testing ---
+pytest==8.3.3
+pytest-asyncio==0.24.0

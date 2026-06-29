@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Run #{{ run.run_number }} · BehaviorCI{% endblock %}
+{% block content %}
+<h1>Run #{{ run.run_number }}</h1>
+<h2>{{ run.summary.get('passed', 0) }}/{{ run.summary.get('total', 0) }} passed &middot; status: {{ run.status }}</h2>
+
+{% set report = run.summary.get('regression_report') %}
+{% if report %}
+  <div class="diff-block">
+    <div class="diff-header">regression report &middot; run #{{ run.run_number - 1 }} &rarr; #{{ run.run_number }}</div>
+    {% if not report.has_regressions %}
+      <div class="diff-line diff-plus">+ no regressions detected. behavior is stable across this run.</div>
+    {% endif %}
+
+    {% for m in report.metric_regressions %}
+    <div class="diff-line diff-minus">- [{{ m.test_case_name }}] {{ m.dimension }} dropped {{ m.previous_score }} &rarr; {{ m.current_score }} (-{{ m.drop }})</div>
+    {% endfor %}
+
+    {% for f in report.pass_fail_flips %}
+    <div class="diff-line diff-minus">- [{{ f.test_case_name }}] PASSED &rarr; FAILED</div>
+    {% endfor %}
+
+    {% for d in report.behavioral_drift %}
+    <div class="diff-line diff-amber">~ [{{ d.test_case_name }}] behavioral drift detected (distance {{ d.embedding_distance }}){{ " -- scores looked fine, tone/style changed" if d.scores_looked_fine else "" }}</div>
+    {% endfor %}
+
+    {% for p in report.systemic_patterns %}
+    <div class="diff-line diff-minus">- systemic pattern: tag "{{ p.tag }}" degraded in {{ p.degraded }}/{{ p.total }} cases ({{ (p.degradation_rate*100)|round }}%)</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<table>
+  <tr>
+    <th>Test case</th>
+    <th>Result</th>
+    <th>Correctness</th>
+    <th>Hallucination</th>
+    <th>Format</th>
+    <th>Behavioral</th>
+  </tr>
+  {% for item in results %}
+  <tr>
+    <td>{{ item.case_name }}</td>
+    <td><span class="badge {{ 'pass' if item.result.passed else 'fail' }}">{{ 'pass' if item.result.passed else 'fail' }}</span></td>
+    <td class="score">{{ item.result.scores.get('correctness', '-') }}</td>
+    <td class="score">{{ item.result.scores.get('hallucination', '-') }}</td>
+    <td class="score">{{ item.result.scores.get('format', '-') }}</td>
+    <td class="score">{{ item.result.scores.get('behavioral', '-') }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

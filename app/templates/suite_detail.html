@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ suite.name }} · BehaviorCI{% endblock %}
+{% block content %}
+<p><a href="/">&larr; All suites</a></p>
+<h1>{{ suite.name }}</h1>
+<h2>{{ suite.description or "No description" }}</h2>
+
+{% if has_trend_data %}
+<div class="card">
+  <div class="card-title">Pass rate trend</div>
+  <div class="meta" style="margin-bottom:8px;">across {{ runs|length }} runs, oldest &rarr; newest</div>
+  {{ pass_rate_chart | safe }}
+</div>
+
+{% if dimension_charts %}
+<div class="card">
+  <div class="card-title">Score trends by dimension</div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px;">
+    {% for dim, chart in dimension_charts.items() %}
+    <div>
+      <div class="meta" style="margin-bottom:4px; text-transform:capitalize;">{{ dim }}</div>
+      {{ chart | safe }}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% else %}
+<div class="empty">Run this suite at least twice to see trend charts here.</div>
+{% endif %}
+
+{% if not runs %}
+<div class="empty">No runs yet for this suite.</div>
+{% endif %}
+
+{% for r in runs %}
+{% set rate = (r.summary.get('pass_rate', 0) * 100) | round %}
+<a class="card" href="/run/{{ r.id }}" style="display:block;">
+  <div class="card-title">Run #{{ r.run_number }}</div>
+  <div class="meta">
+    <span class="badge {{ 'pass' if rate >= 80 else 'fail' }}">{{ rate }}% pass</span>
+    {{ r.summary.get('passed', 0) }}/{{ r.summary.get('total', 0) }} cases &middot; status: {{ r.status }}
+    {% if r.summary.get('regression_report', {}).get('has_regressions') %}
+      <span class="badge fail">regression vs previous run</span>
+    {% elif r.summary.get('regression_report') %}
+      <span class="badge pass">no regression vs previous run</span>
+    {% endif %}
+  </div>
+</a>
+{% endfor %}
+{% endblock %}

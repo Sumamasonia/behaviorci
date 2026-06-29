@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: behaviorci
+      POSTGRES_PASSWORD: behaviorci
+      POSTGRES_DB: behaviorci
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # Free local LLM judge. Pull a model once with:
+  #   docker exec -it behaviorci-ollama-1 ollama pull llama3.1:8b
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - ollama
+    environment:
+      DATABASE_URL: postgresql://behaviorci:behaviorci@postgres:5432/behaviorci
+      JUDGE_MODE: ollama
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: llama3.1:8b
+      EMBED_MODE: local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./test_cases:/app/test_cases
+
+volumes:
+  pg_data:
+  ollama_data:

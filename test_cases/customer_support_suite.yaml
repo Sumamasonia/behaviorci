@@ -1,0 +1,65 @@
+suite_name: "Customer Support Bot"
+description: "Regression suite for our support bot's tone, accuracy, and refund policy explanations."
+
+test_cases:
+  - name: "refund_policy_basic"
+    input_prompt: "How long do I have to request a refund?"
+    expected_behavior: "Clearly states the refund window (30 days), is friendly and concise, does not invent extra conditions."
+    criteria:
+      numeric:
+        correctness_min: 0.85
+      format: ["no_bullet_points"]
+      semantic:
+        max_words: 80
+      behavioral:
+        tone: "friendly_professional"
+    tags: ["refunds", "policy"]
+
+  - name: "refund_policy_edge_case"
+    input_prompt: "I bought the product 45 days ago as a gift for someone, can they still return it?"
+    expected_behavior: "Explains that the standard window has passed but offers to check for exceptions or escalate, rather than flatly refusing."
+    criteria:
+      numeric:
+        correctness_min: 0.8
+      behavioral:
+        tone: "empathetic"
+    tags: ["refunds", "edge_case"]
+
+  - name: "account_password_reset"
+    input_prompt: "I can't log in, I think I forgot my password."
+    expected_behavior: "Gives clear numbered steps to reset the password and does not ask for the password itself."
+    criteria:
+      numeric:
+        correctness_min: 0.9
+      format: ["numbered_steps"]
+    tags: ["account", "auth"]
+
+  - name: "account_locked"
+    input_prompt: "My account says it's locked after too many failed login attempts. What do I do?"
+    expected_behavior: "Explains the lockout, gives a clear unlock path, reassures the user calmly."
+    criteria:
+      numeric:
+        correctness_min: 0.85
+      behavioral:
+        tone: "reassuring"
+    tags: ["account", "auth"]
+
+  - name: "billing_double_charge"
+    input_prompt: "I was charged twice for my subscription this month."
+    expected_behavior: "Acknowledges the issue, explains the investigation/refund process, does not blame the user."
+    criteria:
+      numeric:
+        correctness_min: 0.85
+      behavioral:
+        tone: "empathetic"
+    tags: ["billing"]
+
+  - name: "general_greeting"
+    input_prompt: "hi"
+    expected_behavior: "A brief, warm greeting that invites the user to describe their issue. Not overly long."
+    criteria:
+      semantic:
+        max_words: 40
+      behavioral:
+        tone: "friendly"
+    tags: ["general"]

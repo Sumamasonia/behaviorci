@@ -1,0 +1,69 @@
+name: BehaviorCI Regression Check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  behavior-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama and pull model
+        run: |
+          ollama serve &
+          sleep 5
+          ollama pull llama3.2:3b
+
+      - name: Start mock model endpoint
+        run: |
+          nohup uvicorn mock_model_endpoint:app --port 9000 > mock.log 2>&1 &
+          sleep 3
+
+      - name: Init BehaviorCI DB (fresh SQLite for this run)
+        run: python cli.py init
+
+      - name: Sync test suite
+        id: sync
+        run: |
+          python cli.py sync test_cases/customer_support_suite.yaml | tee sync_output.txt
+          SUITE_ID=$(grep -oP '(?<=SUITE_ID=).+' sync_output.txt)
+          echo "suite_id=$SUITE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Run suite against mock endpoint
+        id: run_suite
+        env:
+          OLLAMA_MODEL: llama3.2:3b
+        run: |
+          python cli.py run "${{ steps.sync.outputs.suite_id }}" http://localhost:9000/generate | tee run_output.txt
+        continue-on-error: true
+
+      - name: Post regression report to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('run_output.txt', 'utf8');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "### BehaviorCI Regression Report\n```\n" + output + "\n```",
+            });
+
+      - name: Fail build if regressions were detected
+        if: steps.run_suite.outcome == 'failure'
+        run: exit 1
