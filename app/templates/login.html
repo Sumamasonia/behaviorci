@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Log in · BehaviorCI{% endblock %}
+{% block content %}
+<div style="max-width:380px; margin:60px auto 0;">
+  <h1 style="text-align:center;">behavior<span style="color:var(--green);">CI</span></h1>
+  <h2 style="text-align:center; margin-bottom:24px;">Sign in with your API key</h2>
+
+  {% if error %}
+  <div class="diff-line diff-minus" style="margin-bottom:16px; border-radius:6px;">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/login" class="card">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="api_key" class="meta" style="display:block; margin-bottom:6px;">API key</label>
+    <input
+      type="password"
+      id="api_key"
+      name="api_key"
+      placeholder="bci_..."
+      autofocus
+      required
+      style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+             border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px; box-sizing:border-box;"
+    >
+    <button
+      type="submit"
+      style="width:100%; margin-top:16px; padding:10px; background:var(--green-dim); color:#fff;
+             border:none; border-radius:6px; font-weight:600; font-size:14px; cursor:pointer;"
+    >
+      Sign in
+    </button>
+  </form>
+
+  <p class="meta" style="text-align:center; margin-top:20px;">
+    Don't have a key yet? Run <code>python cli.py init</code> (or
+    <code>python cli.py get-api-key</code> if you've already initialized)
+    from your terminal to get one.
+  </p>
+</div>
+{% endblock %}

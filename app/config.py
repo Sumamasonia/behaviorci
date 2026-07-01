@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     alert_email_to: str = ""
 
+    session_secret_key: str = "dev-insecure-secret-change-this-in-production"
+
     class Config:
         env_file = ".env"
         extra = "ignore"

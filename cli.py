@@ -73,7 +73,7 @@ def cmd_run(suite_id: str, target_url: str):
     db = SessionLocal()
 
     def caller(prompt: str) -> str:
-        resp = httpx.post(target_url, json={"prompt": prompt}, timeout=60)
+        resp = httpx.post(target_url, json={"prompt": prompt}, timeout=600)
         resp.raise_for_status()
         return resp.json()["output"]
 

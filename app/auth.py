@@ -1,13 +1,11 @@
 """
 Multi-tenant access control.
 
-Every organization gets an API key (generated automatically when the org is
-created). All API routes below the organization level require that key in
-an `X-API-Key` header, and every query is scoped to the calling
-organization's own data -- a request with org A's key can never see org B's
-projects, suites, runs, or results, regardless of IDs guessed or passed in.
+Two auth mechanisms, both backed by the same Organization.api_key:
+- get_current_org: API-key header auth for the REST API (/api/*)
+- get_dashboard_org: session-cookie auth for the browser dashboard
 """
-from fastapi import Depends, HTTPException, Header
+from fastapi import Depends, HTTPException, Header, Request
 from sqlalchemy.orm import Session
 
 from app import models
@@ -57,3 +55,31 @@ def get_owned_run(run_id: str, org: models.Organization, db: Session) -> models.
     if not run:
         raise HTTPException(404, "Run not found.")
     return run
+
+
+def get_dashboard_org(request: Request, db: Session = Depends(get_db)):
+    """Session-cookie based auth for the browser dashboard. Returns the
+    logged-in organization, or redirects to /login if there's no valid
+    session. Used as a dependency on every dashboard page route."""
+    org_id = request.session.get("org_id")
+    if not org_id:
+        raise _redirect_to_login(request)
+
+    org = db.query(models.Organization).filter_by(id=org_id).first()
+    if not org:
+        request.session.clear()
+        raise _redirect_to_login(request)
+
+    return org
+
+
+class _RedirectException(Exception):
+    """Raised internally to short-circuit a dependency into a redirect.
+    Caught by an exception handler registered in main.py."""
+    def __init__(self, url: str):
+        self.url = url
+
+
+def _redirect_to_login(request: Request) -> _RedirectException:
+    next_url = str(request.url)
+    return _RedirectException(f"/login?next={next_url}")

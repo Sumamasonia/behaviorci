@@ -96,7 +96,14 @@
 <body>
 <header>
   <div class="brand">behavior<span class="dot">CI</span></div>
-  <div class="tagline">the git diff for AI behavior</div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="tagline">the git diff for AI behavior</div>
+    {% if org %}
+    <div class="meta" style="border-left:1px solid var(--border); padding-left:16px;">
+      {{ org.name }} &middot; <a href="/logout">log out</a>
+    </div>
+    {% endif %}
+  </div>
 </header>
 <main>
 {% block content %}{% endblock %}
