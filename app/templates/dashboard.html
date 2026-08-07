@@ -1,33 +1,62 @@
 {% extends "base.html" %}
 {% block title %}Suites · BehaviorCI{% endblock %}
 {% block content %}
-<h1>Test Suites</h1>
-<h2>{{ suites|length }} suite{{ 's' if suites|length != 1 else '' }} tracked in this project</h2>
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+  <div>
+    <h1>Test Suites</h1>
+    <h2>{{ suites|length }} suite{{ 's' if suites|length != 1 else '' }} in your workspace</h2>
+  </div>
+  <a href="/new-suite"
+    style="padding:10px 20px; background:var(--green-dim); color:#fff; border-radius:6px;
+           font-weight:600; font-size:14px; white-space:nowrap; margin-top:4px;">
+    + New Suite
+  </a>
+</div>
 
 {% if not suites %}
-<div class="empty">No suites yet. Create one via the API or run <code>behaviorci init</code> from the CLI.</div>
+<div class="empty" style="text-align:center; padding:60px 32px;">
+  <div style="font-size:40px; margin-bottom:16px;">🧪</div>
+  <div style="font-size:18px; font-weight:600; margin-bottom:8px;">No test suites yet</div>
+  <div class="meta" style="margin-bottom:24px;">Create your first suite to start testing your AI's behavior</div>
+  <a href="/new-suite"
+    style="padding:12px 28px; background:var(--green-dim); color:#fff;
+           border-radius:6px; font-weight:600; font-size:15px;">
+    Create your first suite →
+  </a>
+</div>
 {% endif %}
 
 {% for s in suites %}
-<a class="card" href="/suite/{{ s.id }}" style="display:block;">
-  <div class="card-title">{{ s.name }}</div>
-  <div class="meta">{{ s.test_case_count }} test case{{ 's' if s.test_case_count != 1 else '' }}</div>
+<a class="card" href="/suite/{{ s.id }}" style="display:block; text-decoration:none;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div style="flex:1;">
+      <div class="card-title">{{ s.name }}</div>
+      <div class="meta" style="margin-top:4px;">
+        {{ s.test_case_count }} test case{{ 's' if s.test_case_count != 1 else '' }}
+      </div>
+    </div>
+    {% if s.latest_run %}
+      {% set rate = (s.latest_run.summary.get('pass_rate', 0) * 100) | round %}
+      <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+        <span class="badge {{ 'pass' if rate >= 80 else 'fail' }}" style="font-size:14px; padding:4px 12px;">
+          {{ rate }}% pass
+        </span>
+        {% if s.latest_run.summary.get('regression_report', {}).get('has_regressions') %}
+        <div style="margin-top:6px;"><span class="badge fail">⚠ regression detected</span></div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
   {% if s.latest_run %}
     {% set rate = (s.latest_run.summary.get('pass_rate', 0) * 100) | round %}
-    <div class="meta" style="margin-top:8px;">
-      Run #{{ s.latest_run.run_number }} ·
-      <span class="badge {{ 'pass' if rate >= 80 else 'fail' }}">{{ rate }}% pass</span>
-      {% if s.latest_run.summary.get('regression_report', {}).get('has_regressions') %}
-        <span class="badge fail">regression detected</span>
-      {% endif %}
-    </div>
-    <div class="pass-bar"><div class="pass-bar-fill" style="width:{{ rate }}%"></div></div>
+    <div class="meta" style="margin-top:10px;">Run #{{ s.latest_run.run_number }} · {{ s.latest_run.status }}</div>
+    <div class="pass-bar" style="margin-top:8px;"><div class="pass-bar-fill" style="width:{{ rate }}%"></div></div>
     {% if s.sparkline %}
-    <div style="margin-top:10px;">{{ s.sparkline | safe }}</div>
-    <div class="meta" style="margin-top:2px;">pass-rate trend over {{ s.run_count }} runs</div>
+    <div style="margin-top:10px; opacity:0.8;">{{ s.sparkline | safe }}</div>
+    <div class="meta" style="margin-top:2px;">{{ s.run_count }} runs tracked</div>
     {% endif %}
   {% else %}
-    <div class="meta" style="margin-top:8px;">No runs yet</div>
+    <div class="meta" style="margin-top:12px;">No runs yet — click to add test cases and run</div>
   {% endif %}
 </a>
 {% endfor %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Add Test Cases · {{ suite.name }} · BehaviorCI{% endblock %}
+{% block content %}
+<p><a href="/suite/{{ suite.id }}">&larr; Back to {{ suite.name }}</a></p>
+<h1>{{ suite.name }}</h1>
+<h2 style="margin-bottom:32px;">Add test cases — then run the suite to start evaluating</h2>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+
+  <!-- LEFT: existing cases -->
+  <div>
+    <div class="card-title" style="margin-bottom:16px;">
+      {{ existing_cases|length }} test case{{ 's' if existing_cases|length != 1 else '' }} added
+    </div>
+    {% if not existing_cases %}
+    <div class="empty">No test cases yet. Add one using the form →</div>
+    {% endif %}
+    {% for tc in existing_cases %}
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-title">{{ tc.name }}</div>
+      <div class="meta" style="margin-top:4px;">
+        {{ tc.input_prompt[:80] }}{% if tc.input_prompt|length > 80 %}...{% endif %}
+      </div>
+      {% if tc.tags %}
+      <div style="margin-top:8px;">
+        {% for tag in tc.tags %}
+        <span style="background:var(--bg-raised); border:1px solid var(--border); border-radius:4px;
+                     padding:2px 8px; font-size:11px; font-family:var(--mono); margin-right:4px;">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if existing_cases %}
+    <a href="/suite/{{ suite.id }}"
+      style="display:block; text-align:center; margin-top:16px; padding:12px;
+             background:var(--green-dim); color:#fff; border-radius:6px; font-weight:600; font-size:14px;">
+      Done — view suite and run →
+    </a>
+    {% endif %}
+
+    <div style="margin-top:24px;" class="card">
+      <div class="card-title" style="margin-bottom:12px;">Or upload a YAML file</div>
+      <form method="post" action="/suite/{{ suite.id }}/upload-yaml" enctype="multipart/form-data">
+        <input type="file" name="yaml_file" accept=".yaml,.yml" required
+          style="color:var(--text-dim); font-size:13px; margin-bottom:12px; display:block;">
+        <button type="submit"
+          style="width:100%; padding:10px; background:var(--bg-raised); border:1px solid var(--border);
+                 color:var(--text); border-radius:6px; font-size:14px; cursor:pointer;">
+          Upload YAML
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- RIGHT: add case form -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">Add a test case</div>
+    <form method="post" action="/suite/{{ suite.id }}/add-case">
+      <label class="meta" style="display:block; margin-bottom:4px;">Test case name</label>
+      <input type="text" name="case_name" placeholder="refund_policy_basic" required
+        style="width:100%; padding:8px 12px; background:var(--bg-raised); border:1px solid var(--border);
+               border-radius:6px; color:var(--text); font-family:var(--mono); font-size:13px;
+               box-sizing:border-box; margin-bottom:12px;">
+
+      <label class="meta" style="display:block; margin-bottom:4px;">Input prompt (sent to your model)</label>
+      <textarea name="input_prompt" placeholder="How long do I have to request a refund?" required rows="3"
+        style="width:100%; padding:8px 12px; background:var(--bg-raised); border:1px solid var(--border);
+               border-radius:6px; color:var(--text); font-size:13px; box-sizing:border-box;
+               resize:vertical; margin-bottom:12px;"></textarea>
+
+      <label class="meta" style="display:block; margin-bottom:4px;">Expected behavior</label>
+      <textarea name="expected_behavior"
+        placeholder="States the 30-day window, is friendly and concise, does not invent conditions."
+        required rows="3"
+        style="width:100%; padding:8px 12px; background:var(--bg-raised); border:1px solid var(--border);
+               border-radius:6px; color:var(--text); font-size:13px; box-sizing:border-box;
+               resize:vertical; margin-bottom:12px;"></textarea>
+
+      <label class="meta" style="display:block; margin-bottom:4px;">Minimum correctness (0.0 – 1.0)</label>
+      <input type="number" name="correctness_min" value="0.8" min="0" max="1" step="0.05"
+        style="width:100%; padding:8px 12px; background:var(--bg-raised); border:1px solid var(--border);
+               border-radius:6px; color:var(--text); font-family:var(--mono); font-size:13px;
+               box-sizing:border-box; margin-bottom:12px;">
+
+      <label class="meta" style="display:block; margin-bottom:4px;">Tags (comma-separated)</label>
+      <input type="text" name="tags" placeholder="refunds, policy"
+        style="width:100%; padding:8px 12px; background:var(--bg-raised); border:1px solid var(--border);
+               border-radius:6px; color:var(--text); font-size:13px; box-sizing:border-box; margin-bottom:16px;">
+
+      <button type="submit"
+        style="width:100%; padding:10px; background:var(--accent); color:#fff; border:none;
+               border-radius:6px; font-weight:600; font-size:14px; cursor:pointer;">
+        + Add Test Case
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

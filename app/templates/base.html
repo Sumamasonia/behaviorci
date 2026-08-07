@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}BehaviorCI{% endblock %}</title>
 <style>
-  :root {
+  [data-theme="dark"] {
     --bg: #0d1117;
     --bg-raised: #161b22;
     --bg-card: #1c2128;
@@ -18,52 +18,166 @@
     --red-dim: #ff7b72;
     --amber: #d29922;
     --accent: #58a6ff;
-    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  [data-theme="light"] {
+    --bg: #ffffff;
+    --bg-raised: #f6f8fa;
+    --bg-card: #ffffff;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --text-dim: #57606a;
+    --green: #1a7f37;
+    --green-dim: #2da44e;
+    --red: #cf222e;
+    --red-dim: #a40e26;
+    --amber: #9a6700;
+    --accent: #0969da;
   }
   * { box-sizing: border-box; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: var(--sans);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     margin: 0;
     line-height: 1.5;
+    transition: background 0.2s, color 0.2s;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  header {
+
+  /* NAVBAR */
+  .navbar {
     border-bottom: 1px solid var(--border);
-    padding: 16px 32px;
+    padding: 0 32px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    gap: 0;
   }
-  .brand {
-    font-family: var(--mono);
-    font-weight: 600;
+  .nav-brand {
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+    font-weight: 700;
     font-size: 16px;
     color: var(--text);
+    text-decoration: none;
     letter-spacing: -0.02em;
+    flex-shrink: 0;
   }
-  .brand .dot { color: var(--green); }
-  .tagline { color: var(--text-dim); font-size: 13px; font-family: var(--mono); }
+  .nav-brand .dot { color: var(--green); }
+  .nav-brand:hover { text-decoration: none; }
+  .nav-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 16px;
+    flex-shrink: 0;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+  .nav-link {
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+  }
+  .nav-link:hover {
+    background: var(--bg-raised);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-link.active {
+    background: var(--bg-raised);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .nav-org {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .theme-toggle:hover {
+    background: var(--bg-card);
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+
+  /* BUTTONS */
+  .nav-logout {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-logout:hover {
+    background: var(--bg-raised);
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  /* MAIN */
   main { max-width: 1040px; margin: 0 auto; padding: 32px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
-  h2 { font-size: 16px; color: var(--text-dim); font-weight: 500; margin: 0 0 24px; }
+  h2 { font-size: 15px; color: var(--text-dim); font-weight: 400; margin: 0 0 24px; }
+
+  /* CARDS */
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
   }
-  .card:hover { border-color: #444c56; }
+  .card:hover { border-color: var(--text-dim); }
   .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .meta { color: var(--text-dim); font-size: 13px; font-family: var(--mono); }
+  .meta {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  /* BADGES */
   .badge {
     display: inline-flex;
     align-items: center;
-    font-family: var(--mono);
+    font-family: "IBM Plex Mono", monospace;
     font-size: 12px;
     padding: 2px 8px;
     border-radius: 4px;
@@ -72,41 +186,153 @@
   .badge.pass { background: rgba(63,185,80,0.15); color: var(--green); }
   .badge.fail { background: rgba(248,81,73,0.15); color: var(--red); }
   .badge.drift { background: rgba(210,153,34,0.15); color: var(--amber); }
-  .pass-bar { height: 6px; border-radius: 3px; background: var(--bg-raised); overflow: hidden; margin-top: 10px; }
-  .pass-bar-fill { height: 100%; background: var(--green); }
+
+  /* PASS BAR */
+  .pass-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-raised);
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .pass-bar-fill { height: 100%; background: var(--green); border-radius: 3px; }
+
+  /* DIFF */
   .diff-line {
-    font-family: var(--mono);
+    font-family: "IBM Plex Mono", monospace;
     font-size: 13px;
-    padding: 4px 12px;
+    padding: 5px 12px;
     border-radius: 3px;
     white-space: pre-wrap;
+    word-break: break-word;
   }
   .diff-minus { background: rgba(248,81,73,0.12); color: var(--red-dim); }
-  .diff-plus { background: rgba(63,185,80,0.12); color: var(--green); }
+  .diff-plus  { background: rgba(63,185,80,0.12);  color: var(--green); }
   .diff-amber { background: rgba(210,153,34,0.12); color: var(--amber); }
-  .diff-block { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-  .diff-header { background: var(--bg-raised); padding: 8px 12px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
-  .empty { color: var(--text-dim); font-style: italic; padding: 32px; text-align: center; border: 1px dashed var(--border); border-radius: 6px; }
+  .diff-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .diff-header {
+    background: var(--bg-raised);
+    padding: 8px 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* EMPTY */
+  .empty {
+    color: var(--text-dim);
+    font-style: italic;
+    padding: 40px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* TABLE */
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  th { color: var(--text-dim); font-weight: 500; font-family: var(--mono); font-size: 12px; }
-  .score { font-family: var(--mono); }
+  th {
+    color: var(--text-dim);
+    font-weight: 500;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+  }
+  .score { font-family: "IBM Plex Mono", monospace; }
+
+  /* FORMS */
+  input[type=text], input[type=url], input[type=number],
+  input[type=email], input[type=password], textarea, select {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
+  }
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">behavior<span class="dot">CI</span></div>
-  <div style="display:flex; align-items:center; gap:16px;">
-    <div class="tagline">the git diff for AI behavior</div>
-    {% if org %}
-    <div class="meta" style="border-left:1px solid var(--border); padding-left:16px;">
-      {{ org.name }} &middot; <a href="/logout">log out</a>
-    </div>
+
+<!-- APPLY SAVED THEME BEFORE PAINT (prevents flash) -->
+<script>
+  (function() {
+    var t = localStorage.getItem('bci-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="nav-brand">behavior<span class="dot">CI</span></a>
+
+  {% if org is defined and org %}
+  <div class="nav-divider"></div>
+  <div class="nav-links">
+    <a href="/"
+      class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+      🏠 Dashboard
+    </a>
+    <a href="/new-suite"
+      class="nav-link {% if '/new-suite' in request.url.path %}active{% endif %}">
+      ＋ New Suite
+    </a>
+    <a href="/welcome" class="nav-link">About</a>
+  </div>
+  {% else %}
+  <div style="flex:1;"></div>
+  {% endif %}
+
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Toggle light/dark">
+      🌙
+    </button>
+    {% if org is defined and org %}
+    <span class="nav-org">{{ org.name }}</span>
+    <a href="/logout" class="nav-logout">Sign out</a>
+    {% else %}
+    <a href="/login" class="nav-logout">Sign in</a>
+    <a href="/setup"
+      style="padding:5px 14px; border-radius:6px; background:var(--green-dim);
+             color:#fff; font-size:13px; font-weight:600; text-decoration:none;">
+      Get started
+    </a>
     {% endif %}
   </div>
-</header>
+</nav>
+
 <main>
 {% block content %}{% endblock %}
 </main>
+
+<script>
+  // Set correct icon after page load
+  (function() {
+    var t = localStorage.getItem('bci-theme') || 'dark';
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  })();
+
+  function toggleTheme() {
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('bci-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'dark' ? '🌙' : '☀️';
+  }
+</script>
+
 </body>
 </html>

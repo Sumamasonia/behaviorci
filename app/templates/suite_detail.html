@@ -2,20 +2,61 @@
 {% block title %}{{ suite.name }} · BehaviorCI{% endblock %}
 {% block content %}
 <p><a href="/">&larr; All suites</a></p>
-<h1>{{ suite.name }}</h1>
-<h2>{{ suite.description or "No description" }}</h2>
 
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+  <h1>{{ suite.name }}</h1>
+  <div style="display:flex; gap:10px; flex-shrink:0; margin-top:4px;">
+    <a href="/suite/{{ suite.id }}/add-cases"
+      style="padding:8px 16px; background:var(--bg-card); border:1px solid var(--border);
+             color:var(--text); border-radius:6px; font-size:13px;">
+      + Add Cases
+    </a>
+    <button onclick="document.getElementById('run-panel').style.display='block'; this.style.display='none';"
+      style="padding:8px 20px; background:var(--green-dim); color:#fff; border:none;
+             border-radius:6px; font-weight:600; font-size:13px; cursor:pointer;">
+      ▶ Run Suite
+    </button>
+  </div>
+</div>
+<h2 style="margin-bottom:24px;">{{ suite.description or "No description" }} · {{ test_case_count }} test cases</h2>
+
+<!-- RUN PANEL (hidden until button clicked) -->
+<div id="run-panel" style="display:none;" class="card" style="margin-bottom:24px;">
+  <div class="card-title" style="margin-bottom:12px;">Run Suite</div>
+  <label class="meta" style="display:block; margin-bottom:6px;">Model endpoint URL</label>
+  <input type="url" id="target-url" value="http://localhost:9000/generate"
+    style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+           border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px;
+           box-sizing:border-box; margin-bottom:8px;">
+  <p class="meta" style="margin-bottom:16px;">
+    The endpoint BehaviorCI will POST each test prompt to.
+    Make sure your model server is running before clicking Run.
+  </p>
+  <button onclick="startRun()"
+    style="padding:10px 24px; background:var(--green-dim); color:#fff; border:none;
+           border-radius:6px; font-weight:600; font-size:14px; cursor:pointer;" id="run-btn">
+    ▶ Start Run
+  </button>
+  <div id="run-progress" style="display:none; margin-top:16px;">
+    <div class="meta" id="run-msg">Initializing...</div>
+    <div style="height:6px; background:var(--bg-raised); border-radius:3px; overflow:hidden; margin-top:8px;">
+      <div id="run-bar" style="height:100%; width:5%; background:var(--accent); border-radius:3px; transition:width 0.5s;"></div>
+    </div>
+  </div>
+  <div id="run-error" style="display:none; margin-top:12px;" class="diff-line diff-minus"></div>
+</div>
+
+<!-- TREND CHARTS -->
 {% if has_trend_data %}
 <div class="card">
   <div class="card-title">Pass rate trend</div>
-  <div class="meta" style="margin-bottom:8px;">across {{ runs|length }} runs, oldest &rarr; newest</div>
+  <div class="meta" style="margin-bottom:8px;">{{ runs|length }} runs, oldest → newest</div>
   {{ pass_rate_chart | safe }}
 </div>
-
 {% if dimension_charts %}
 <div class="card">
   <div class="card-title">Score trends by dimension</div>
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px;">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px;">
     {% for dim, chart in dimension_charts.items() %}
     <div>
       <div class="meta" style="margin-bottom:4px; text-transform:capitalize;">{{ dim }}</div>
@@ -29,23 +70,70 @@
 <div class="empty">Run this suite at least twice to see trend charts here.</div>
 {% endif %}
 
+<!-- RUN LIST -->
 {% if not runs %}
-<div class="empty">No runs yet for this suite.</div>
+<div class="empty">No runs yet. Click "Run Suite" above to start.</div>
 {% endif %}
-
 {% for r in runs %}
 {% set rate = (r.summary.get('pass_rate', 0) * 100) | round %}
 <a class="card" href="/run/{{ r.id }}" style="display:block;">
-  <div class="card-title">Run #{{ r.run_number }}</div>
-  <div class="meta">
-    <span class="badge {{ 'pass' if rate >= 80 else 'fail' }}">{{ rate }}% pass</span>
-    {{ r.summary.get('passed', 0) }}/{{ r.summary.get('total', 0) }} cases &middot; status: {{ r.status }}
-    {% if r.summary.get('regression_report', {}).get('has_regressions') %}
-      <span class="badge fail">regression vs previous run</span>
-    {% elif r.summary.get('regression_report') %}
-      <span class="badge pass">no regression vs previous run</span>
-    {% endif %}
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="card-title">Run #{{ r.run_number }}</div>
+    <div>
+      <span class="badge {{ 'pass' if rate >= 80 else 'fail' }}">{{ rate }}% pass</span>
+      {{ r.summary.get('passed', 0) }}/{{ r.summary.get('total', 0) }} cases
+      {% if r.summary.get('regression_report', {}).get('has_regressions') %}
+        <span class="badge fail" style="margin-left:8px;">regression</span>
+      {% elif r.summary.get('regression_report') %}
+        <span class="badge pass" style="margin-left:8px;">stable</span>
+      {% endif %}
+    </div>
   </div>
 </a>
 {% endfor %}
+
+<script>
+async function startRun() {
+  const btn = document.getElementById('run-btn');
+  const progress = document.getElementById('run-progress');
+  const bar = document.getElementById('run-bar');
+  const msg = document.getElementById('run-msg');
+  const errBox = document.getElementById('run-error');
+  const url = document.getElementById('target-url').value.trim();
+  if (!url) { alert('Please enter a model endpoint URL.'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Running...';
+  progress.style.display = 'block'; errBox.style.display = 'none';
+  const messages = [
+    'Loading embedding model...',
+    'Sending prompts to your model...',
+    'LLM judge evaluating outputs...',
+    'Computing embedding distances...',
+    'Comparing against previous run...',
+    'Building regression report...',
+  ];
+  let i = 0, w = 5;
+  const iv = setInterval(() => {
+    if (w < 85) { w += Math.random() * 10; bar.style.width = Math.min(w, 85) + '%'; }
+    if (i < messages.length - 1) msg.textContent = messages[i++];
+  }, 4000);
+  try {
+    const res = await fetch(
+      `/api/suites/{{ suite.id }}/run?target_url=${encodeURIComponent(url)}`,
+      { method: 'POST', headers: { 'X-API-Key': '{{ api_key }}' } }
+    );
+    clearInterval(iv);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Run failed'); }
+    const data = await res.json();
+    bar.style.width = '100%'; bar.style.background = 'var(--green)';
+    msg.textContent = `✓ Run #${data.run_number} complete — loading results...`;
+    setTimeout(() => { window.location.href = `/run/${data.run_id}`; }, 1200);
+  } catch(err) {
+    clearInterval(iv);
+    progress.style.display = 'none';
+    btn.disabled = false; btn.textContent = '▶ Start Run';
+    errBox.style.display = 'block';
+    errBox.textContent = '✗ ' + err.message + ' — make sure your model server is running at ' + url;
+  }
+}
+</script>
 {% endblock %}

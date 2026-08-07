@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BehaviorCI — The Git Diff for AI Behavior</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-raised: #161b22;
+    --bg-card: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --green: #3fb950;
+    --green-dim: #2ea043;
+    --red: #f85149;
+    --amber: #d29922;
+    --accent: #58a6ff;
+    --purple: #a371f7;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* NAV */
+  nav {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .brand { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); }
+  .brand span { color: var(--green); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a { color: var(--text-dim); font-size: 14px; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .btn-primary {
+    background: var(--green-dim);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--green); color: #fff; }
+
+  /* HERO */
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 100px 48px 80px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    color: var(--accent);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: var(--mono);
+    margin-bottom: 32px;
+  }
+  .hero h1 {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .hero h1 .highlight { color: var(--green); }
+  .hero p {
+    font-size: 20px;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 40px;
+  }
+  .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn-lg {
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-green { background: var(--green-dim); color: #fff; }
+  .btn-green:hover { background: var(--green); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--text-dim); }
+
+  /* STAT BAR */
+  .stat-bar {
+    background: var(--bg-raised);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-number { font-size: 36px; font-weight: 800; font-family: var(--mono); color: var(--green); }
+  .stat-label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* FINDING BLOCK */
+  .finding-block {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 48px;
+  }
+  .finding-block h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .finding-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--amber);
+    border-radius: 8px;
+    padding: 32px;
+  }
+  .finding-card h3 { font-size: 22px; margin-bottom: 12px; }
+  .finding-card p { color: var(--text-dim); line-height: 1.7; }
+  .finding-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .metric-box {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-val { font-size: 28px; font-family: var(--mono); font-weight: 700; }
+  .metric-val.green { color: var(--green); }
+  .metric-val.amber { color: var(--amber); }
+  .metric-val.red { color: var(--red); }
+  .metric-desc { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  /* HOW IT WORKS */
+  .how-it-works {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 48px;
+  }
+  .section-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .section-sub { color: var(--text-dim); margin-bottom: 48px; font-size: 16px; }
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content h4 { font-size: 16px; margin-bottom: 6px; }
+  .step-content p { color: var(--text-dim); font-size: 14px; }
+
+  /* FEATURES GRID */
+  .features {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 48px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .feature-card:hover { border-color: var(--accent); }
+  .feature-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .feature-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .feature-card p { color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+
+  /* DIFF DEMO */
+  .diff-demo {
+    max-width: 900px;
+    margin: 80px auto;
+    padding: 0 48px;
+  }
+  .diff-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .diff-header {
+    background: var(--bg-raised);
+    padding: 10px 16px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .diff-line { padding: 5px 16px; }
+  .diff-minus { background: rgba(248,81,73,0.12); color: #ff7b72; }
+  .diff-plus { background: rgba(63,185,80,0.12); color: var(--green); }
+  .diff-amber { background: rgba(210,153,34,0.12); color: var(--amber); }
+  .diff-neutral { color: var(--text-dim); }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 80px 48px;
+    border-top: 1px solid var(--border);
+    margin-top: 80px;
+  }
+  .cta h2 { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+  .cta p { color: var(--text-dim); margin-bottom: 32px; font-size: 16px; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">behavior<span>CI</span></div>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#features">Features</a>
+    <a href="https://github.com/Sumamasonia/behaviorci" target="_blank">GitHub</a>
+    <a href="/login" class="btn-primary">Open Dashboard →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">📄 Research paper submitted to arXiv</div>
+  <h1>The <span class="highlight">git diff</span><br>for AI behavior</h1>
+  <p>Automated behavioral regression testing for LLM-powered products. Catches when your model update breaks things that worked before — and fails your CI build automatically.</p>
+  <div class="hero-actions">
+    <a href="/login" class="btn-lg btn-green">Open Dashboard →</a>
+    <a href="https://github.com/Sumamasonia/behaviorci" target="_blank" class="btn-lg btn-outline">View on GitHub</a>
+  </div>
+</section>
+
+<!-- STAT BAR -->
+<div class="stat-bar">
+  <div class="stat">
+    <div class="stat-number">4</div>
+    <div class="stat-label">Evaluation dimensions</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">0.73</div>
+    <div class="stat-label">Max drift detected in experiments</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">100%</div>
+    <div class="stat-label">Human-judge agreement</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">$0</div>
+    <div class="stat-label">Cost to run (fully local)</div>
+  </div>
+</div>
+
+<!-- KEY FINDING -->
+<section class="finding-block">
+  <h2>🔬 Key Research Finding</h2>
+  <div class="finding-card">
+    <h3>Two models scored identically — but behaved completely differently</h3>
+    <p>
+      In our experiments, Llama 3.1 8B and Llama 3.2 3B both scored <strong>100% pass rate</strong>
+      on an 8-case coding assistant test suite. A traditional single-score evaluation would declare
+      them identical. BehaviorCI's dual-signal approach revealed something different: the
+      <strong>embedding distance between their safety refusal outputs was 0.73</strong> — indicating
+      fundamentally different refusal behaviors completely invisible to score-based evaluation alone.
+    </p>
+    <div class="finding-metrics">
+      <div class="metric-box">
+        <div class="metric-val green">100%</div>
+        <div class="metric-desc">Pass rate — both models<br>(traditional evaluation)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val amber">0.73</div>
+        <div class="metric-desc">Embedding distance on<br>safety refusal case</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val red">Invisible</div>
+        <div class="metric-desc">to single-score<br>evaluation systems</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how-it-works">
+  <h2 class="section-title">How it works</h2>
+  <p class="section-sub">BehaviorCI treats AI behavior the same way software engineers treat code — with automated tests, version-controlled expectations, and CI/CD gating.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Define test cases in YAML</h4>
+        <p>Write prompts, expected behaviors, and evaluation criteria in version-controlled YAML files — just like unit tests for code. Load them with <code>python cli.py sync my_suite.yaml</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Run against your model</h4>
+        <p>BehaviorCI calls your model endpoint for each test case, then judges the output across 4 independent dimensions: correctness, hallucination, format, and behavioral tone.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Dual-signal evaluation</h4>
+        <p>The LLM judge scores quality. Embedding distance independently measures semantic drift. Both signals together catch regressions that either signal alone would miss.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Regression diff engine</h4>
+        <p>Run N is automatically compared against Run N-1. Metric drops, pass→fail flips, behavioral drift, and systemic patterns are all detected and reported.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h4>CI/CD gates your deployment</h4>
+        <p>The CLI exits with a non-zero code on regression — failing your GitHub Actions build automatically. The regression report is posted as a PR comment for the reviewer to see.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE DIFF DEMO -->
+<section class="diff-demo">
+  <h2 class="section-title" style="margin-bottom:8px;">What a regression report looks like</h2>
+  <p style="color:var(--text-dim); margin-bottom:24px; font-size:16px;">The dashboard shows a git-diff-style report comparing this run against the last one.</p>
+  <div class="diff-block">
+    <div class="diff-header">regression report · run #2 → run #3 · Customer Support Bot</div>
+    <div class="diff-line diff-minus">- [refund_policy_basic] correctness dropped 0.9 → 0.2 (-0.7)</div>
+    <div class="diff-line diff-minus">- [refund_policy_basic] behavioral dropped 0.95 → 0.4 (-0.55)</div>
+    <div class="diff-line diff-minus">- [account_password_reset] format dropped 1.0 → 0.0 (-1.0)</div>
+    <div class="diff-line diff-minus">- [billing_double_charge] PASSED → FAILED</div>
+    <div class="diff-line diff-minus">- [account_locked] PASSED → FAILED</div>
+    <div class="diff-line diff-amber">~ [refuses_to_write_keylogger] behavioral drift detected (distance 0.73) — scores looked fine, tone changed</div>
+    <div class="diff-line diff-minus">- systemic pattern: tag "refunds" degraded in 2/2 cases (100%)</div>
+    <div class="diff-line diff-minus">- systemic pattern: tag "account" degraded in 2/2 cases (100%)</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <h2 class="section-title">Everything included</h2>
+  <p class="section-sub">One framework, every tool you need to keep your AI product's behavior under control.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚖️</div>
+      <h4>4-Dimensional LLM Judge</h4>
+      <p>Scores correctness, hallucination, format, and behavioral tone independently. A single aggregate score loses the signal of which dimension regressed — BehaviorCI never aggregates.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📐</div>
+      <h4>Embedding-Based Drift Detection</h4>
+      <p>Cosine distance between run N and N-1 outputs catches behavioral drift even when scores look fine. The dual-signal approach detects what judge scores alone miss.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔀</div>
+      <h4>GitHub Actions Integration</h4>
+      <p>Fails your CI build automatically when regressions are detected. Posts the full regression report as a PR comment. No extra tooling needed — works with any GitHub repo.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h4>Trend Dashboard</h4>
+      <p>Pass-rate and per-dimension score history across all runs. Login-protected, per-organization. See the moment behavior changed and trace it to the right deployment.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏢</div>
+      <h4>Multi-Tenant Architecture</h4>
+      <p>Every organization gets an API key. Complete data isolation enforced at both the API and dashboard level — one org can never see another's data.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <h4>Slack & Email Alerts</h4>
+      <p>Get notified the moment a regression is detected. Configurable Slack webhook and SMTP email — both optional, both free to set up.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <h4>100% Free to Run</h4>
+      <p>Uses Ollama for the LLM judge (local, open models), sentence-transformers for embeddings (local CPU), and PostgreSQL for storage. No API keys, no cloud bills.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔌</div>
+      <h4>Model-Agnostic</h4>
+      <p>BehaviorCI tests what your model produces — it never assumes which model you're using. Works with OpenAI, Anthropic, Ollama, or your own fine-tuned model behind an API.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>Start testing your AI's behavior today</h2>
+  <p>Free, open source, and runs entirely on your own machine.</p>
+  <div class="hero-actions">
+    <a href="/login" class="btn-lg btn-green">Open Dashboard →</a>
+    <a href="https://github.com/Sumamasonia/behaviorci" target="_blank" class="btn-lg btn-outline">View on GitHub</a>
+  </div>
+</section>
+
+<footer>
+  <div>behavior<strong>CI</strong> — the git diff for AI behavior</div>
+  <div style="display:flex; gap:24px;">
+    <a href="https://github.com/Sumamasonia/behaviorci">GitHub</a>
+    <a href="/login">Dashboard</a>
+    <a href="/docs">API Docs</a>
+  </div>
+</footer>
+
+</body>
+</html>

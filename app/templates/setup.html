@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Get Started · BehaviorCI{% endblock %}
+{% block content %}
+<div style="max-width:440px; margin:60px auto 0;">
+  <h1 style="text-align:center; margin-bottom:8px;">Create your workspace</h1>
+  <p class="meta" style="text-align:center; margin-bottom:32px;">Takes 10 seconds. No credit card needed.</p>
+
+  {% if error %}
+  <div class="diff-line diff-minus" style="margin-bottom:16px; border-radius:6px; padding:12px;">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/setup" class="card">
+    <label class="meta" style="display:block; margin-bottom:6px;">Organization / team name</label>
+    <input type="text" name="org_name" placeholder="Acme Corp" required autofocus
+      style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+             border-radius:6px; color:var(--text); font-size:14px; box-sizing:border-box; margin-bottom:16px;">
+
+    <label class="meta" style="display:block; margin-bottom:6px;">Workspace slug (no spaces)</label>
+    <input type="text" name="org_slug" placeholder="acme-corp" required pattern="[a-z0-9\-]+"
+      style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+             border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px;
+             box-sizing:border-box;">
+    <p class="meta" style="margin-top:6px; margin-bottom:20px;">Lowercase letters, numbers, and hyphens only</p>
+
+    <button type="submit"
+      style="width:100%; padding:12px; background:var(--green-dim); color:#fff; border:none;
+             border-radius:6px; font-weight:600; font-size:15px; cursor:pointer;">
+      Create workspace →
+    </button>
+  </form>
+
+  <p class="meta" style="text-align:center; margin-top:20px;">
+    Already have a workspace? <a href="/login">Sign in</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}New Suite · BehaviorCI{% endblock %}
+{% block content %}
+<p><a href="/">&larr; Dashboard</a></p>
+<h1>Create a new test suite</h1>
+<h2 style="margin-bottom:32px;">A suite is a collection of test cases for one product or feature</h2>
+
+<div class="card" style="max-width:560px;">
+  <form method="post" action="/new-suite">
+    <label class="meta" style="display:block; margin-bottom:6px;">Suite name</label>
+    <input type="text" name="suite_name" placeholder="Customer Support Bot" required autofocus
+      style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+             border-radius:6px; color:var(--text); font-size:14px; box-sizing:border-box; margin-bottom:16px;">
+
+    <label class="meta" style="display:block; margin-bottom:6px;">Description (optional)</label>
+    <textarea name="suite_description" placeholder="What does this suite test?" rows="3"
+      style="width:100%; padding:10px 12px; background:var(--bg-raised); border:1px solid var(--border);
+             border-radius:6px; color:var(--text); font-size:14px; box-sizing:border-box;
+             resize:vertical; margin-bottom:20px;"></textarea>
+
+    <button type="submit"
+      style="width:100%; padding:12px; background:var(--green-dim); color:#fff; border:none;
+             border-radius:6px; font-weight:600; font-size:15px; cursor:pointer;">
+      Create suite and add test cases →
+    </button>
+  </form>
+</div>
+{% endblock %}

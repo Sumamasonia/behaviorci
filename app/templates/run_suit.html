@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Run Suite · {{ suite.name }} · BehaviorCI{% endblock %}
+{% block content %}
+<p><a href="/suite/{{ suite.id }}">&larr; Back to {{ suite.name }}</a></p>
+<h1>Run Suite</h1>
+<h2 style="margin-bottom:32px;">{{ suite.name }} · {{ test_case_count }} test cases</h2>
+
+<div class="card" style="max-width:560px;">
+  <div class="card-title" style="margin-bottom:16px;">Configure run</div>
+
+  <form id="run-form">
+    <label class="meta" style="display:block; margin-bottom:6px;">Model endpoint URL</label>
+    <input
+      type="url"
+      id="target-url"
+      value="http://localhost:9000/generate"
+      placeholder="http://localhost:9000/generate"
+      style="width:100%; padding:10px 12px; background:var(--bg-raised);
+             border:1px solid var(--border); border-radius:6px; color:var(--text);
+             font-family:var(--mono); font-size:14px; box-sizing:border-box;"
+    >
+    <p class="meta" style="margin-top:8px;">
+      This is the endpoint BehaviorCI will POST each test prompt to.
+      Start your model endpoint server before running.
+    </p>
+
+    <button
+      type="button"
+      id="run-btn"
+      onclick="startRun()"
+      style="width:100%; margin-top:20px; padding:12px;
+             background:var(--green-dim); color:#fff; border:none;
+             border-radius:6px; font-weight:600; font-size:15px; cursor:pointer;"
+    >
+      ▶ Run Suite
+    </button>
+  </form>
+
+  <!-- Progress indicator (hidden until run starts) -->
+  <div id="progress" style="display:none; margin-top:24px;">
+    <div class="meta" style="margin-bottom:8px;">Running {{ test_case_count }} test cases...</div>
+    <div style="height:6px; background:var(--bg-raised); border-radius:3px; overflow:hidden;">
+      <div id="progress-bar" style="height:100%; width:5%; background:var(--accent);
+           border-radius:3px; transition:width 0.5s ease-in-out;"></div>
+    </div>
+    <div id="progress-text" class="meta" style="margin-top:8px; font-family:var(--mono);">
+      Initializing...
+    </div>
+  </div>
+
+  <!-- Error display -->
+  <div id="error-box" style="display:none; margin-top:16px;"
+       class="diff-line diff-minus" style="border-radius:6px; padding:12px;">
+  </div>
+</div>
+
+<script>
+async function startRun() {
+  const btn = document.getElementById('run-btn');
+  const progress = document.getElementById('progress');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const errorBox = document.getElementById('error-box');
+  const targetUrl = document.getElementById('target-url').value.trim();
+
+  if (!targetUrl) {
+    alert('Please enter a model endpoint URL.');
+    return;
+  }
+
+  // Disable button, show progress
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+  btn.style.background = 'var(--border)';
+  progress.style.display = 'block';
+  errorBox.style.display = 'none';
+
+  // Animate progress bar (fake animation while real run happens in background)
+  const messages = [
+    'Loading embedding model...',
+    'Running test cases against model endpoint...',
+    'Judging outputs with LLM evaluator...',
+    'Computing embedding distances...',
+    'Comparing against previous run...',
+    'Generating regression report...',
+  ];
+  let msgIndex = 0;
+  let width = 5;
+  const interval = setInterval(() => {
+    if (width < 85) {
+      width += Math.random() * 8;
+      progressBar.style.width = Math.min(width, 85) + '%';
+    }
+    if (msgIndex < messages.length - 1) {
+      progressText.textContent = messages[msgIndex++];
+    }
+  }, 4000);
+
+  try {
+    const response = await fetch(
+      `/api/suites/{{ suite.id }}/run?target_url=${encodeURIComponent(targetUrl)}`,
+      {
+        method: 'POST',
+        headers: { 'X-API-Key': '{{ api_key }}' }
+      }
+    );
+
+    clearInterval(interval);
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.detail || 'Run failed');
+    }
+
+    const data = await response.json();
+
+    // Complete the progress bar
+    progressBar.style.width = '100%';
+    progressBar.style.background = 'var(--green)';
+    progressText.textContent = `✓ Run #${data.run_number} complete — redirecting to results...`;
+
+    // Redirect to run detail page after 1 second
+    setTimeout(() => {
+      window.location.href = `/run/${data.run_id}`;
+    }, 1200);
+
+  } catch (err) {
+    clearInterval(interval);
+    progress.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '▶ Run Suite';
+    btn.style.background = 'var(--green-dim)';
+    errorBox.style.display = 'block';
+    errorBox.textContent = '✗ Error: ' + err.message +
+      '. Make sure your model endpoint is running at ' + targetUrl;
+  }
+}
+</script>
+{% endblock %}
