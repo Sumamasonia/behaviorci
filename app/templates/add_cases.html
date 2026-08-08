@@ -22,13 +22,22 @@
         {{ tc.input_prompt[:80] }}{% if tc.input_prompt|length > 80 %}...{% endif %}
       </div>
       {% if tc.tags %}
-      <div style="margin-top:8px;">
-        {% for tag in tc.tags %}
-        <span style="background:var(--bg-raised); border:1px solid var(--border); border-radius:4px;
-                     padding:2px 8px; font-size:11px; font-family:var(--mono); margin-right:4px;">{{ tag }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
+    <div style="margin-top:8px;">
+      {% for tag in tc.tags %}
+      <span style="background:var(--bg-raised); border:1px solid var(--border); border-radius:4px;
+                   padding:2px 8px; font-size:11px; font-family:var(--mono); margin-right:4px;">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <form method="post" action="/suite/{{ suite.id }}/delete-case/{{ tc.id }}"
+          style="margin-top:10px;"
+          onsubmit="return confirm('Delete this test case?')">
+      <button type="submit"
+        style="padding:3px 10px; background:transparent; border:1px solid var(--red);
+               color:var(--red); border-radius:4px; font-size:12px; cursor:pointer;">
+        Delete
+      </button>
+    </form>
     </div>
     {% endfor %}
 

@@ -212,6 +212,26 @@ def add_case_submit(
     db.commit()
     return RedirectResponse(url=f"/suite/{suite_id}/add-cases", status_code=303)
 
+@router.post("/suite/{suite_id}/delete-case/{case_id}")
+def delete_case(
+    suite_id: str,
+    case_id: str,
+    org: models.Organization = Depends(get_dashboard_org),
+    db: Session = Depends(get_db),
+):
+    suite = (
+        db.query(models.TestSuite)
+        .join(models.Project)
+        .filter(models.TestSuite.id == suite_id, models.Project.org_id == org.id)
+        .first()
+    )
+    if not suite:
+        raise HTTPException(404, "Suite not found")
+    tc = db.query(models.TestCase).filter_by(id=case_id, suite_id=suite_id).first()
+    if tc:
+        db.delete(tc)
+        db.commit()
+    return RedirectResponse(url=f"/suite/{suite_id}/add-cases", status_code=303)
 
 @router.post("/suite/{suite_id}/upload-yaml")
 def upload_yaml(
